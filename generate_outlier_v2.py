@@ -191,13 +191,12 @@ with open(SYMBOL_SHORT_SAMPLE_FILE) as symbol_csv_file:
 # 			this_p.adj_list.append(that_p)
 # 			that_p.adj_list.append(this_p)
 
-new_list = []
-
 def compute(i):
 	this_p = list_of_patents[i]
 	this_d = this_p.appDate
 
 	j = i - 1
+	adj_for_this_p_list = []
 	while j >= 0:
 		that_p = list_of_patents[j]		
 		that_d = that_p.appDate
@@ -205,20 +204,26 @@ def compute(i):
 		isAdj = False
 		if isBefore(this_d, that_d):
 			isAdj = isAdjacent(this_p, that_p)
-			if isAdj == True:
-				print("append: ", that_p.appNo)
-				this_p.adj_list.append(that_p)
+			
+		if isAdj == True:
+			print("append: ", that_p.appNo)
+			this_p.adj_list.append(that_p)
+			adj_for_this_p_list.append(that_p.appNo)
 
 		# move the pointer for the inner while loop
 		j = j - 1
 
-	new_list.append(this_p)
+	print ("Compute result: ", this_p.appNo, " adj_list: ", " ".join(adj_for_this_p_list), " debug: ", len(list_of_patents[i].adj_list))
+
 
 start_index = 216
 
 if __name__ == '__main__':
 	with Pool(processes=8) as p:
 		p.map(compute, range(start_index, len(list_of_patents)))
+
+for i in range (start_index, len(list_of_patents)):
+	print ("Debug 3: ", list_of_patents[i].appNo, " ", len(list_of_patents[i].adj_list))
 
 #i = 1
 # with open(TEST_OUTPUT, 'w') as output_csv:
@@ -266,15 +271,11 @@ with open(TEST_OUTPUT, 'w') as output_csv:
 	# write header row
 	writer.writerow(["appNo", "appDate", "Adj Patents"])
 
-	# for i in range (start_index, len(list_of_patents)):
-	for p in new_list:
-		# p = list_of_patents[i]
-		adj_list = []
-		for n in p.adj_list:
-			adj_list.append(n.appNo)
+	for i in range (start_index, len(list_of_patents)):
+		p = list_of_patents[i]
 
-		print (" ".join(adj_list))
-		writer.writerow([p.appNo, p.appDate, " ".join(adj_list)])
+		print ("debug 2: ", p.appNo, " ", len(p.adj_list))
+		# writer.writerow([p.appNo, p.appDate, " ".join(adj_list)])
 
 
 # outlier_patents = []
