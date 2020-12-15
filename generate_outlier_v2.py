@@ -191,74 +191,40 @@ with open(SYMBOL_SHORT_SAMPLE_FILE) as symbol_csv_file:
 # 			this_p.adj_list.append(that_p)
 # 			that_p.adj_list.append(this_p)
 
-def compute(i):
-	this_p = list_of_patents[i]
-	this_d = this_p.appDate
-
-	j = i - 1
-	adj_for_this_p_list = []
-	while j >= 0:
-		that_p = list_of_patents[j]		
-		that_d = that_p.appDate
-
-		isAdj = False
-		if isBefore(this_d, that_d):
-			isAdj = isAdjacent(this_p, that_p)
-			
-		if isAdj == True:
-			print("append: ", that_p.appNo)
-			this_p.adj_list.append(that_p)
-			adj_for_this_p_list.append(that_p.appNo)
-
-		# move the pointer for the inner while loop
-		j = j - 1
-
-	print ("Compute result: ", this_p.appNo, " adj_list: ", " ".join(adj_for_this_p_list), " debug: ", len(list_of_patents[i].adj_list))
-
-
-start_index = 216
-
-if __name__ == '__main__':
-	with Pool(processes=8) as p:
-		p.map(compute, range(start_index, len(list_of_patents)))
-
-for i in range (start_index, len(list_of_patents)):
-	print ("Debug 3: ", list_of_patents[i].appNo, " ", len(list_of_patents[i].adj_list))
-
 #i = 1
-# with open(TEST_OUTPUT, 'w') as output_csv:
-# 	writer = csv.writer(output_csv)
-# 	# write header row
-# 	writer.writerow(["appNo", "appDate", "Adj Patents"])
+with open(TEST_OUTPUT, 'w') as output_csv:
+	writer = csv.writer(output_csv)
+	# write header row
+	writer.writerow(["appNo", "appDate", "Adj Patents"])
 
-# 	i = 216 # 216 for nationality 1, 2358 for nationality 0
-# 	while i < len(list_of_patents):
-# 		this_p = list_of_patents[i]
+	i = 216 # 216 for nationality 1, 2358 for nationality 0
+	while i < len(list_of_patents):
+		this_p = list_of_patents[i]
 
-# 		j = i - 1
-# 		adj_list = []
-# 		while j >= 0:
-# 			that_p = list_of_patents[j]
+		j = i - 1
+		adj_list = []
+		while j >= 0:
+			that_p = list_of_patents[j]
 			
-# 			this_d = this_p.appDate
-# 			that_d = that_p.appDate
+			this_d = this_p.appDate
+			that_d = that_p.appDate
 
-# 			isAdj = False
-# 			if isBefore(this_d, that_d):
-# 				isAdj = isAdjacent(this_p, that_p)
+			isAdj = False
+			if isBefore(this_d, that_d):
+				isAdj = isAdjacent(this_p, that_p)
 
-# 			if isAdj == True:
-# 				this_p.adj_list.append(that_p)
-# 				adj_list.append(str(that_p.appNo))
+			if isAdj == True:
+				this_p.adj_list.append(that_p)
+				adj_list.append(str(that_p.appNo))
 
-# 			# move the pointer for the inner while loop
-# 			j = j - 1
+			# move the pointer for the inner while loop
+			j = j - 1
 
-# 		# write to a file
-# 		writer.writerow([this_p.appNo, this_p.appDate, " ".join(adj_list)])
+		# write to a file
+		writer.writerow([this_p.appNo, this_p.appDate, " ".join(adj_list)])
 
-# 		# move the pointer for the outer while loop
-# 		i = i + 1
+		# move the pointer for the outer while loop
+		i = i + 1
 
 # print ("02101189: ", result_dict['02101189']['bitstring'])
 # print ("02101190: ", result_dict['02101190']['bitstring'])
@@ -266,15 +232,15 @@ for i in range (start_index, len(list_of_patents)):
 # print ("test test test: ", isAdjacent(result_dict['02101189']['bitstring'], result_dict['02101190']['bitstring']))
 
 # write results to file
-with open(TEST_OUTPUT, 'w') as output_csv:
-	writer = csv.writer(output_csv)
-	# write header row
-	writer.writerow(["appNo", "appDate", "Adj Patents"])
+# with open(TEST_OUTPUT, 'w') as output_csv:
+# 	writer = csv.writer(output_csv)
+# 	# write header row
+# 	writer.writerow(["appNo", "appDate", "Adj Patents"])
 
-	for i in range (start_index, len(list_of_patents)):
-		p = list_of_patents[i]
+for i in range (216, len(list_of_patents)):
+	p = list_of_patents[i]
 
-		print ("debug 2: ", p.appNo, " ", len(p.adj_list))
+	print ("debug 2: ", p.appNo, " ", len(p.adj_list))
 		# writer.writerow([p.appNo, p.appDate, " ".join(adj_list)])
 
 
