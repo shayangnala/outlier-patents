@@ -186,20 +186,18 @@ if __name__ == "__main__":
 		pl = multiprocessing.Pool(4)
 
 		result = pl.map(compute, range (216, len(list_of_patents)))
-		for p in result:
-			print ("Debug 3: ", p.appNo, " ", p.adj_list)
+
+
+		# for p in result:
+		# 	print ("Debug 3: ", p.appNo, " ", p.adj_list)
+		with open(TEST_OUTPUT, 'w') as output_csv:
+			writer = csv.writer(output_csv)
+			# write header row
+			writer.writerow(["appNo", "appDate", "Adj Patents"])
+
+			for p in result:
+				# write to a file
+				writer.writerow([p.appNo, p.appDate, " ".join(p.adj_list)])
+				print ("debug 2: ", p.appNo, " ", " ".join(p.adj_list))
 
 		pl.close()
-
-# seperate write module
-# with open(TEST_OUTPUT, 'w') as output_csv:
-# 	writer = csv.writer(output_csv)
-# 	# write header row
-# 	writer.writerow(["appNo", "appDate", "Adj Patents"])
-
-# 	for i in range (216, len(list_of_patents)):
-# 		p = list_of_patents[i]	
-# 		# write to a file
-# 		writer.writerow([p.appNo, p.appDate, " ".join(p.adj_list)])
-# 		print ("debug 2: ", p.appNo, " ", " ".join(p.adj_list))
-
