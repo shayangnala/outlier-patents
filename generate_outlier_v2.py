@@ -1,6 +1,6 @@
 import csv
 import datetime
-from multiprocessing import Pool
+import multiprocessing
 
 # no dict version
 
@@ -166,23 +166,40 @@ def compute(i):
 		# move the pointer for the inner while loop
 		j = j - 1
 
+	return this_p
+
 
 i = 216 # 216 for nationality 1, 2358 for nationality 0
-while i < len(list_of_patents):
-	compute(i)
-	# move the pointer for the outer while loop
-	i = i + 1
+# while i < len(list_of_patents):
+# 	compute(i)
+# 	# move the pointer for the outer while loop
+# 	i = i + 1
 
+def change_state(l):
+	# new_p = Patent('p1', ' ', ' ')
+	# l.append(new_p)
+	# l[0] = Patent('changed', ' ', ' ') this is very useful
+	l[0].appNo = 'changed'
+
+if __name__ == "__main__":
+	with multiprocessing.Manager() as manager:
+		pl = multiprocessing.Pool(4)
+
+		result = pl.map(compute, range (216, len(list_of_patents)))
+		for p in result:
+			print ("Debug 3: ", p.appNo, " ", p.adj_list)
+
+		pl.close()
 
 # seperate write module
-with open(TEST_OUTPUT, 'w') as output_csv:
-	writer = csv.writer(output_csv)
-	# write header row
-	writer.writerow(["appNo", "appDate", "Adj Patents"])
+# with open(TEST_OUTPUT, 'w') as output_csv:
+# 	writer = csv.writer(output_csv)
+# 	# write header row
+# 	writer.writerow(["appNo", "appDate", "Adj Patents"])
 
-	for i in range (216, len(list_of_patents)):
-		p = list_of_patents[i]	
-		# write to a file
-		writer.writerow([p.appNo, p.appDate, " ".join(p.adj_list)])
-		print ("debug 2: ", p.appNo, " ", " ".join(p.adj_list))
+# 	for i in range (216, len(list_of_patents)):
+# 		p = list_of_patents[i]	
+# 		# write to a file
+# 		writer.writerow([p.appNo, p.appDate, " ".join(p.adj_list)])
+# 		print ("debug 2: ", p.appNo, " ", " ".join(p.adj_list))
 
