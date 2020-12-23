@@ -2,9 +2,9 @@ import csv
 import datetime
 import multiprocessing
 
-SYMBOL_SHORT_SAMPLE_FILE = "/Users/shayangnala/py_crawler/outlier_patent/ipcs_sample_till_2006_nationality_0.csv"
+SYMBOL_SHORT_SAMPLE_FILE = "/Users/shayangnala/py_crawler/outlier_patent/ipcs_sample_till_2006_nationality_1.csv"
 MAIN_GROUP_LIST_FILE = "/Users/shayangnala/Downloads/maingroup_symbol_list.csv"
-TEST_OUTPUT = "/Users/shayangnala/py_crawler/outlier_patent/test_output.csv"
+TEST_OUTPUT = "/Users/shayangnala/py_crawler/outlier_patent/test_output_old.csv"
 
 main_group_symbol_list = []
 list_of_patents = []
@@ -82,7 +82,7 @@ with open(SYMBOL_SHORT_SAMPLE_FILE) as symbol_csv_file:
 		n_list = ['0']*len(main_group_symbol_list)
 
 		# add value to the ipc dictionary
-		ipcs = str(row[1]).split()
+		ipcs = str(row[4]).split()
 		for i in ipcs:
 			main_group = i.split('/')[0]
 			if main_group in main_group_symbol_list: 
@@ -97,9 +97,7 @@ with open(SYMBOL_SHORT_SAMPLE_FILE) as symbol_csv_file:
 
 		# extract other attributes from the row
 		apn = row[0]
-		appdate = row[2]
-		grtdate = row[4]
-		nationality = row[5]
+		appdate = row[1]
 
 
 		my_patent = Patent(apn, appdate, convert_list_to_string(n_list))
@@ -134,7 +132,7 @@ if __name__ == "__main__":
 	with multiprocessing.Manager() as manager:
 		pl = multiprocessing.Pool(4)
 
-		result = pl.map(compute, range (2358, len(list_of_patents)))
+		result = pl.map(compute, range (216, len(list_of_patents)))
 
 		with open(TEST_OUTPUT, 'w') as output_csv:
 			writer = csv.writer(output_csv)

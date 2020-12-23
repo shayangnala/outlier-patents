@@ -12,7 +12,7 @@ import multiprocessing
 
 SYMBOL_SHORT_SAMPLE_FILE = "/Users/shayangnala/py_crawler/outlier_patent/ipcs_sample_till_2006_nationality_1.csv"
 MAIN_GROUP_LIST_FILE = "/Users/shayangnala/Downloads/maingroup_symbol_list.csv"
-TEST_OUTPUT = "/Users/shayangnala/py_crawler/outlier_patent/test_output.csv"
+TEST_OUTPUT = "/Users/shayangnala/py_crawler/outlier_patent/test_output_new.csv"
 
 # this list stores the registered main group symbols
 main_group_symbol_list = []
@@ -113,35 +113,76 @@ def retrieve_patents(endyear):
 
 			waitlist.append(my_patent)
 
+
+def is_same_date(curr_p, next_p):
+	curr_date = curr_p.appDate
+	next_date = next_p.appDate
+
+	cd_split = curr_date.split('/')
+	nd_split = next_date.split('/')
+
+	d1 = datetime.date(int(cd_split[0]), int(cd_split[1]), int(cd_split[2]))
+	d2 = datetime.date(int(nd_split[0]), int(nd_split[1]), int(nd_split[2]))
+
+	return d1 == d2
+
+
 def find_outliers():
-	for p in waitlist:
-		this_mg_string = p.mg_string
-		if this_mg_string in existing_mg_symbols:
-			print ("Debug 6, this: ", this_mg_string, " is in existing_mg_symbols")
-			continue
+	i = 0
+	while i < len(waitlist):
+		curr_p = waitlist[i]
 
-		# set the flag
-		# assuming p is an outlier until not true
-		is_outlier = True
+		# batch add all patents of the same date into a list		
+		p_same_date = []
+		p_same_date.append(curr_p)
 
-		# set operation
-		this_mg_set = set(this_mg_string.split())			
-		for that_mg_string in existing_mg_symbols:
-			that_mg_set = set(that_mg_string.split())
-			symm_diff = this_mg_set.symmetric_difference(that_mg_set)
-
-			print ("Debug 5, symm_diff between this: ", this_mg_string, " and that: ", that_mg_string, " is: ", " ".join(symm_diff))
-
-			if len(symm_diff) < 2:
-				is_outlier = False
+		j = i + 1
+		while j < len(waitlist):
+			if is_same_date(curr_p, waitlist[j]):
+				p_same_date.append(waitlist[j])
+				j = j + 1
+			else: 
 				break
 
-		if is_outlier == True:
-			print ("Debug 3, appending outlier: ", p.appNo, " appdate: ", p.appDate, " mg_string: ", p.mg_string)
-			outliers.append(p)
+		i = j
+
+		apns = []
+		for x in p_same_date:
+			apns.append(x.appNo)
+		print ("Debug 8, this batch: ", " ".join(apns))
+
+		batch_mg_strings = []
+		for p in p_same_date:			
+			this_mg_string = p.mg_string
+			batch_mg_strings.append(this_mg_string)
+
+			if this_mg_string in existing_mg_symbols:
+				print ("Debug 6, this: ", this_mg_string, " is in existing_mg_symbols")
+				continue
+
+			# set the flag
+			# assuming p is an outlier until not true
+			is_outlier = True
+
+			# set operation
+			this_mg_set = set(this_mg_string.split())			
+			for that_mg_string in existing_mg_symbols:
+				that_mg_set = set(that_mg_string.split())
+				symm_diff = this_mg_set.symmetric_difference(that_mg_set)
+
+				print ("Debug 5, symm_diff between this: ", this_mg_string, " and that: ", that_mg_string, " is: ", " ".join(symm_diff))
+
+				if len(symm_diff) < 2:
+					is_outlier = False
+					break
+
+			if is_outlier == True:
+				print ("Debug 3, appending outlier: ", p.appNo, " appdate: ", p.appDate, " mg_string: ", p.mg_string)
+				outliers.append(p)
+
 
 		# add the mg_string to existing mg symbols set
-		existing_mg_symbols.add(this_mg_string)			
+		existing_mg_symbols.update(batch_mg_strings)
 
 # === The main functions ====
 
