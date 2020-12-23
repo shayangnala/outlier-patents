@@ -1,9 +1,7 @@
 import csv
 import datetime
 import multiprocessing
-
-# To be solved:
-# 1. same date: should not be counted, batch process the records at the same date??
+import argparse
 
 # Preprocessing the data 
 # 1. extract
@@ -11,8 +9,14 @@ import multiprocessing
 # 3. sort
 
 SYMBOL_SHORT_SAMPLE_FILE = "/Users/shayangnala/py_crawler/outlier_patent/ipcs_sample_till_2006_nationality_1.csv"
-MAIN_GROUP_LIST_FILE = "/Users/shayangnala/Downloads/maingroup_symbol_list.csv"
 TEST_OUTPUT = "/Users/shayangnala/py_crawler/outlier_patent/test_output_new.csv"
+
+parser = argparse.ArgumentParser(description="Identify the outliers for a particular year, the input file must be sorted")
+parser.add_argument("--year", "-y", type=int, help="The year to identify outliers for")
+parser.add_argument("--inputfile", "-i", help="Path of the input file (containing all patents)", default=SYMBOL_SHORT_SAMPLE_FILE)
+parser.add_argument("--outputfile", "-o", help="Path of the output file", default=TEST_OUTPUT)
+
+args = parser.parse_args()
 
 # this list stores the registered main group symbols
 main_group_symbol_list = []
@@ -32,8 +36,6 @@ waitlist = []
 # this list stores the outlier patents
 outliers = []
 
-# this list stores the outliers
-
 # the patent class
 class Patent:
 
@@ -50,7 +52,7 @@ class Patent:
 
 # retrieve patents before the given end date
 def retrieve_patents(endyear):
-	with open(SYMBOL_SHORT_SAMPLE_FILE) as symbol_csv_file:
+	with open(args.inputfile) as symbol_csv_file:
 		reader = csv.reader(symbol_csv_file)
 		header_row = next(reader) # reader the header row
 
@@ -89,6 +91,9 @@ def retrieve_patents(endyear):
 
 
 		for row in reader:
+			appyear = row[1].split('/')[0]
+			if int(appyear) > int(endyear) + 1:
+				break
 
 			# extract the ipcs
 			ipcs = str(row[4]).split()
@@ -186,14 +191,14 @@ def find_outliers():
 
 # === The main functions ====
 
-retrieve_patents(2005)
+retrieve_patents(args.year-1)
 print ("Debug 2, the length of existing_mg_symbols set: ", len(existing_mg_symbols))
 print ("Debug 2, the length of the waitlist: ", len(waitlist))
 find_outliers()
 print ("Debug 4, the length of outliers: ", len(outliers))
 
 # for debug purpose, write the outliers to a file
-with open(TEST_OUTPUT, 'w') as output_csv:
+with open(args.outputfile, 'w') as output_csv:
 	writer = csv.writer(output_csv)
 	# write header row
 	writer.writerow(["appNo", "mg_string"])
