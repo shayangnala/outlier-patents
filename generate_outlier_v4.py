@@ -43,11 +43,11 @@ all_pats = {}
 # all mg symbol combination register
 existing_mg_symbols = set()
 
-# this list stores the patents waiting to be compared
-waitlist = []
+# newly added mg symbols for each year
+yearly_added_mg_symbols = {}
 
-# this list stores the outlier patents
-outliers = []
+# this list stores the patents waiting to be compared
+waitlist = {}
 
 # the patent class
 class Patent:
@@ -70,7 +70,9 @@ def retrieve_patents(startyear, endyear):
 		reader = csv.reader(symbol_csv_file)
 		header_row = next(reader) # reader the header row
 
-		# construct bitstring according to the main_group_symbol_list	
+		# construct bitstring according to the main_group_symbol_list
+
+		yearly_added_mg_symbols[startyear-1] = set()
 		for row in reader:
 			appyear = row[1].split('/')[0]
 			if int(appyear) >= int(startyear):
@@ -102,7 +104,11 @@ def retrieve_patents(startyear, endyear):
 
 			my_patent = Patent(apn, appdate, nationality, mg_string, mg_symbols)
 
+			# add to the master set
 			existing_mg_symbols.add(mg_string)
+
+			# add to the yearly set
+			yearly_added_mg_symbols[startyear-1].add(mg_string)
 
 
 		for row in reader:
@@ -130,9 +136,31 @@ def retrieve_patents(startyear, endyear):
 			apn = row[0]
 			appdate = row[1]
 			nationality = row[9]
+
+			print ("Debug 2, the row looks like: ", apn , " date: ", appdate, " mg_string: ", mg_string)
+
 			my_patent = Patent(apn, appdate, nationality, mg_string, mg_symbols)
 
-			waitlist.append(my_patent)
+			# check the mg_symbols that if it should be added as a newly added one:
+			if mg_string not in existing_mg_symbols:
+
+				# add to the master register:
+				existing_mg_symbols.add(mg_string)
+
+
+				# add to each year's register:
+				if appyear in yearly_added_mg_symbols.keys():
+					yearly_added_mg_symbols[appyear].add(mg_string)
+				else:
+					yearly_added_mg_symbols[appyear] = set() # this is a set, too
+					yearly_added_mg_symbols[appyear].add(mg_string)
+
+
+			if appyear in waitlist.keys():
+				waitlist[appyear].append(my_patent) # using list so that appdate order is still maintained within each year
+			else:
+				waitlist[appyear] = []
+				waitlist[appyear].append(my_patent)
 
 
 def is_same_date(curr_p, next_p):
@@ -148,19 +176,23 @@ def is_same_date(curr_p, next_p):
 	return d1 == d2
 
 
-def find_outliers():
+# this_set: a set of patents
+# that_set: a set of mg symbol combinations
+def compute(this_set, that_set):
 	i = 0
-	while i < len(waitlist):
-		curr_p = waitlist[i]
+	outliers = set()
+	print ("Debug XX: " , len(this_set))
+	while i < len(this_set):
+		curr_p = this_set[i]
 
 		# batch add all patents of the same date into a list		
 		p_same_date = []
 		p_same_date.append(curr_p)
 
 		j = i + 1
-		while j < len(waitlist):
-			if is_same_date(curr_p, waitlist[j]):
-				p_same_date.append(waitlist[j])
+		while j < len(this_set):
+			if is_same_date(curr_p, this_set[j]):
+				p_same_date.append(this_set[j])
 				j = j + 1
 			else: 
 				break
@@ -177,7 +209,7 @@ def find_outliers():
 			this_mg_string = p.mg_string
 			batch_mg_strings.append(this_mg_string)
 
-			if this_mg_string in existing_mg_symbols:
+			if this_mg_string in that_set:
 				print ("Debug 6, this: ", this_mg_string, " is in existing_mg_symbols")
 				continue
 
@@ -187,7 +219,7 @@ def find_outliers():
 
 			# set operation
 			this_mg_set = set(this_mg_string.split())			
-			for that_mg_string in existing_mg_symbols:
+			for that_mg_string in that_set:
 				that_mg_set = set(that_mg_string.split())
 				symm_diff = this_mg_set.symmetric_difference(that_mg_set)
 
@@ -199,19 +231,107 @@ def find_outliers():
 
 			if is_outlier == True:
 				print ("Debug 3, appending outlier: ", p.appNo, " appdate: ", p.appDate, " mg_string: ", p.mg_string)
-				outliers.append(p)
+				outliers.add(p)
+
+	return outliers
+
+def compare_with_self_year(this_set):
+	ty_existings = set()
+
+	i = 0
+	outliers = set()	
+
+	# find the batch with the same date
+	while i < len(this_set):
+		curr_p = this_set[i]
+
+		# batch add all patents of the same date into a list		
+		p_same_date = []
+		p_same_date.append(curr_p)
+
+		j = i + 1
+		while j < len(this_set):
+			if is_same_date(curr_p, this_set[j]):
+				p_same_date.append(this_set[j])
+				j = j + 1
+			else: 
+				break
+
+		i = j
+
+		apns = []
+		for x in p_same_date:
+			apns.append(x.appNo)
+		print ("Debug a, this batch: ", " ".join(apns))
+
+		batch_mg_strings = []
+		for p in p_same_date:			
+			this_mg_string = p.mg_string
+			batch_mg_strings.append(this_mg_string)
+
+			if this_mg_string in ty_existings:
+				print ("Debug y, this: ", this_mg_string, " is in existing_mg_symbols")
+				continue
+
+			# set the flag
+			# assuming p is an outlier until not true
+			is_outlier = True
+
+			# set operation
+			this_mg_set = set(this_mg_string.split())			
+			for that_mg_string in ty_existings:
+				that_mg_set = set(that_mg_string.split())
+				symm_diff = this_mg_set.symmetric_difference(that_mg_set)
+
+				print ("Debug 5, symm_diff between this: ", this_mg_string, " and that: ", that_mg_string, " is: ", " ".join(symm_diff))
+
+				if len(symm_diff) < 2:
+					is_outlier = False
+					break
+
+			if is_outlier == True:
+				print ("Debug 3, appending outlier: ", p.appNo, " appdate: ", p.appDate, " mg_string: ", p.mg_string)
+				outliers.add(p)
+
+		ty_existings.update(batch_mg_strings)
+
+	return outliers
 
 
-		# add the mg_string to existing mg symbols set
-		existing_mg_symbols.update(batch_mg_strings)
+def find_outliers(startyear, endyear):
+
+	i = startyear
+	
+	all_outliers = set()
+
+	for i in range (startyear, endyear+1): 
+		this_set = waitlist[str(i)]
+
+		results = []
+
+		for j in range(startyear-1, i):
+			that_set = yearly_added_mg_symbols[j]
+			outliers = compute(this_set, that_set)
+			# all_outliers = all_outliers + outliers # it has problems here
+			results.append(outliers)
+
+		results.append(compare_with_self_year(this_set))
+
+		results_intersection = set.intersection(*results)
+
+		all_outliers.update(results_intersection)
+
+
+	return all_outliers
+
 
 # === The main functions ====
 
 retrieve_patents(args.startyear, args.endyear)
-print ("Debug 2, the length of existing_mg_symbols set: ", len(existing_mg_symbols))
-print ("Debug 2, the length of the waitlist: ", len(waitlist))
-find_outliers()
-print ("Debug 4, the length of outliers: ", len(outliers))
+print ("Debug 3, the length of existing_mg_symbols set: ", len(existing_mg_symbols))
+print ("Debug 3, the length of the waitlist: ", len(waitlist), " keys: ", waitlist.keys())
+all_outliers = find_outliers(args.startyear, args.endyear)
+print ("Debug 4, the length of outliers: ", len(all_outliers))
 
 output_file_name = args.outputfile + "_" + str(args.startyear) + "_" + str(args.endyear) + ".csv"
 
@@ -221,7 +341,7 @@ with open(output_file_name, 'w') as output_csv:
 	# write header row
 	writer.writerow(["appNo", "appDate", "mg_string", "nationality"])
 
-	for p in outliers:
+	for p in all_outliers:
 		# write to a file
 		writer.writerow([p.appNo, p.appDate, p.mg_string, p.nationality])
 		# print ("debug 2: ", p.appNo, " ", " ".join(p.adj_list))
