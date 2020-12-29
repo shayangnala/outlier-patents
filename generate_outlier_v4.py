@@ -297,32 +297,50 @@ def compare_with_self_year(this_set):
 
 	return outliers
 
+def find_outliers(i):
+	this_set = waitlist[str(i)]
 
-def find_outliers(startyear, endyear):
+	results = []
 
-	i = startyear
+	for j in yearly_added_mg_symbols.keys():
+		if int(j) >= i:
+			continue;
+		that_set = yearly_added_mg_symbols[j]
+		outliers = compute(this_set, that_set)
+		# all_outliers = all_outliers + outliers # it has problems here
+		results.append(outliers)
+
+	results.append(compare_with_self_year(this_set))
+
+	results_intersection = set.intersection(*results)
+
+	return list(results_intersection)
+
+# def find_outliers(startyear, endyear):
+
+# 	i = startyear
 	
-	all_outliers = set()
+# 	all_outliers = set()
 
-	for i in range (startyear, endyear+1): 
-		this_set = waitlist[str(i)]
+# 	for i in range (startyear, endyear+1): 
+# 		this_set = waitlist[str(i)]
 
-		results = []
+# 		results = []
 
-		for j in range(startyear-1, i):
-			that_set = yearly_added_mg_symbols[j]
-			outliers = compute(this_set, that_set)
-			# all_outliers = all_outliers + outliers # it has problems here
-			results.append(outliers)
+# 		for j in range(startyear-1, i):
+# 			that_set = yearly_added_mg_symbols[j]
+# 			outliers = compute(this_set, that_set)
+# 			# all_outliers = all_outliers + outliers # it has problems here
+# 			results.append(outliers)
 
-		results.append(compare_with_self_year(this_set))
+# 		results.append(compare_with_self_year(this_set))
 
-		results_intersection = set.intersection(*results)
+# 		results_intersection = set.intersection(*results)
 
-		all_outliers.update(results_intersection)
+# 		all_outliers.update(results_intersection)
 
 
-	return all_outliers
+# 	return all_outliers
 
 
 # === The main functions ====
@@ -330,18 +348,27 @@ def find_outliers(startyear, endyear):
 retrieve_patents(args.startyear, args.endyear)
 print ("Debug 3, the length of existing_mg_symbols set: ", len(existing_mg_symbols))
 print ("Debug 3, the length of the waitlist: ", len(waitlist), " keys: ", waitlist.keys())
-all_outliers = find_outliers(args.startyear, args.endyear)
-print ("Debug 4, the length of outliers: ", len(all_outliers))
 
-output_file_name = args.outputfile + "_" + str(args.startyear) + "_" + str(args.endyear) + ".csv"
+if __name__ == "__main__":
+	with multiprocessing.Manager() as manager:
+		all_outliers = set()
+		pl = multiprocessing.Pool(4)
+		result = pl.map(find_outliers, range(args.startyear, args.endyear + 1))
+		print ("len: ", len(result[0])+len(result[1]))
+		
+		pl.close()
 
-# for debug purpose, write the outliers to a file
-with open(output_file_name, 'w') as output_csv:
-	writer = csv.writer(output_csv)
-	# write header row
-	writer.writerow(["appNo", "appDate", "mg_string", "nationality"])
+		print ("Debug 4, the length of outliers: ", len(all_outliers))
 
-	for p in all_outliers:
-		# write to a file
-		writer.writerow([p.appNo, p.appDate, p.mg_string, p.nationality])
-		# print ("debug 2: ", p.appNo, " ", " ".join(p.adj_list))
+# output_file_name = args.outputfile + "_" + str(args.startyear) + "_" + str(args.endyear) + ".csv"
+
+# # for debug purpose, write the outliers to a file
+# with open(output_file_name, 'w') as output_csv:
+# 	writer = csv.writer(output_csv)
+# 	# write header row
+# 	writer.writerow(["appNo", "appDate", "mg_string", "nationality"])
+
+# 	for p in all_outliers:
+# 		# write to a file
+# 		writer.writerow([p.appNo, p.appDate, p.mg_string, p.nationality])
+# 		# print ("debug 2: ", p.appNo, " ", " ".join(p.adj_list))
