@@ -252,7 +252,7 @@ print ("Debug 2, the length of the waitlist: ", len(waitlist))
 find_outliers()
 print ("Debug 4, the length of outliers: ", len(outliers))
 
-output_file_name = args.outputfile + "_" + str(args.startyear) + "_" + str(args.endyear) + ".csv"
+output_file_name = args.outputfile + "outliers_" + str(args.startyear) + "_" + str(args.endyear) + ".csv"
 
 # for debug purpose, write the outliers to a file
 with open(output_file_name, 'w') as output_csv:
