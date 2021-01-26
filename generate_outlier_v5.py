@@ -110,7 +110,7 @@ def retrieve_patents(startyear, endyear):
 			mg_string = " ".join(sorted(list(mg_symbols)))
 
 			# extract other attributes from the row
-			apn = row[0]
+			apn = str(row[0])
 			appdate = row[1]
 			nationality = row[9]
 
@@ -149,7 +149,7 @@ def retrieve_patents(startyear, endyear):
 			mg_string = " ".join(sorted(list(mg_symbols)))
 
 			# extract other attributes from the row
-			apn = row[0]
+			apn = str(row[0])
 			appdate = row[1]
 			nationality = row[9]
 			my_patent = Patent(apn, appdate, nationality, mg_string, mg_symbols)
