@@ -31,10 +31,19 @@ with open(ALL_PATENTS_FILE) as all_patents_file:
 
 		# co-occurrence frequencies for all subclass combinations
 		for j in combinations(sorted(list(mg_symbols)), 2):
+
+			# 1. store the sorted order			
 			if j in ipc_comb_dict.keys():
 				ipc_comb_dict[j] = ipc_comb_dict[j] + 1
 			else:
 				ipc_comb_dict[j] = 1
+
+			# 2. store the reversed order
+			reversed_j = (j[1], j[0])
+			if reversed_j in ipc_comb_dict.keys():
+				ipc_comb_dict[reversed_j] = ipc_comb_dict[reversed_j] + 1
+			else:
+				ipc_comb_dict[reversed_j] = 1
 
 		for k in mg_symbols:
 			if k in ipc_freq_dict.keys():
